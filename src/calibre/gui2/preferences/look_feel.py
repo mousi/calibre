@@ -19,6 +19,7 @@ from PyQt5.Qt import (
 )
 
 from calibre import human_readable
+from calibre.constants import isosx
 from calibre.ebooks.metadata.sources.prefs import msprefs
 from calibre.gui2.dialogs.template_dialog import TemplateDialog
 from calibre.gui2.preferences import ConfigWidgetBase, test_widget, CommaSeparatedList
@@ -281,6 +282,9 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.commit_icon_theme = None
         self.icon_theme_button.clicked.connect(self.choose_icon_theme)
         r('gui_layout', config, restart_required=True, choices=[(_('Wide'), 'wide'), (_('Narrow'), 'narrow')])
+        r('hidpi', gprefs, restart_required=True, choices=[(_('Automatic'), 'auto'), (_('On'), 'on'), (_('Off'), 'off')])
+        if isosx:
+            self.opt_hidpi.setVisible(False), self.label_hidpi.setVisible(False)
         r('ui_style', gprefs, restart_required=True, choices=[(_('System default'), 'system'), (_('Calibre style'),
                     'calibre')])
         r('book_list_tooltips', gprefs)
