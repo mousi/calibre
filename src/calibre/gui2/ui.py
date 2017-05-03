@@ -480,7 +480,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
 
     def start_content_server(self, check_started=True):
         from calibre.srv.embedded import Server
-        self.content_server = Server(self.library_broker, self.handle_changes_from_server)
+        self.content_server = Server(self.library_broker, Dispatcher(self.handle_changes_from_server))
         self.content_server.state_callback = Dispatcher(
                 self.iactions['Connect Share'].content_server_state_changed)
         if check_started:
@@ -489,8 +489,10 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         self.content_server.start()
 
     def handle_changes_from_server(self, library_path, change_event):
+        if DEBUG:
+            prints('Received server change event: {} for {}'.format(change_event, library_path))
         if self.library_broker.is_gui_library(library_path):
-            self.server_changes.push((library_path, change_event))
+            self.server_changes.put((library_path, change_event))
             self.server_change_notification_timer.start()
 
     def handle_changes_from_server_debounced(self):
@@ -505,7 +507,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             if self.library_broker.is_gui_library(library_path):
                 changes.append(change_event)
         if changes:
-            handle_changes(self, changes)
+            handle_changes(changes, self)
 
     def content_server_start_failed(self, msg):
         error_dialog(self, _('Failed to start Content server'),
@@ -592,6 +594,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
     def refresh_all(self):
         m = self.library_view.model()
         m.db.data.refresh(clear_caches=False, do_search=False)
+        self.saved_searches_changed(recount=False)
         m.resort()
         m.research()
         self.tags_view.recount()
